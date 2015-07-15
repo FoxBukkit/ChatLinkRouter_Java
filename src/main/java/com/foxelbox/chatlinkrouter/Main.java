@@ -62,7 +62,7 @@ public class Main {
                 while(!Thread.currentThread().isInterrupted()) {
                     poller.poll();
                     if(poller.pollin(0)) {
-                        serverToMe.recv();
+                        serverToMe.recv(); // Topic
                         moveElements(serverToMe, meToLink);
                     }
                     if(poller.pollin(1)) {
