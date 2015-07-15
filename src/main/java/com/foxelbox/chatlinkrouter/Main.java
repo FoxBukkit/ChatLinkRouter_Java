@@ -40,9 +40,8 @@ public class Main {
         configuration = new Configuration(new File("."));
         zmqContext = ZMQ.context(4);
 
-        final ZMQ.Socket serverToMe = zmqContext.socket(ZMQ.SUB);
+        final ZMQ.Socket serverToMe = zmqContext.socket(ZMQ.PULL);
         serverToMe.bind(configuration.getValue("zmq-server-to-broker", "tcp://127.0.0.1:5556"));
-        serverToMe.subscribe("CMI".getBytes());
         final ZMQ.Socket meToLink = zmqContext.socket(ZMQ.PUSH);
         meToLink.bind(configuration.getValue("zmq-broker-to-link", "tcp://127.0.0.1:5557"));
 
@@ -62,7 +61,6 @@ public class Main {
                 while(!Thread.currentThread().isInterrupted()) {
                     poller.poll();
                     if(poller.pollin(0)) {
-                        serverToMe.recv(); // Topic
                         moveElements(serverToMe, meToLink);
                     }
                     if(poller.pollin(1)) {

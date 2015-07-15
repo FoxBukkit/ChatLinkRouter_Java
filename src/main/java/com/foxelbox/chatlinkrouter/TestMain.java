@@ -32,7 +32,7 @@ public class TestMain {
     public static void main(String[] args) {
         configuration = new Configuration(new File("."));
 
-        sender = zmqContext.socket(ZMQ.PUB);
+        sender = zmqContext.socket(ZMQ.PUSH);
         sender.connect(configuration.getValue("zmq-server-to-broker", "tcp://127.0.0.1:5556"));
 
         final ZMQ.Socket receiver = zmqContext.socket(ZMQ.SUB);
@@ -59,7 +59,6 @@ public class TestMain {
 
     public static void sendMessage() {
         System.out.println("A");
-        sender.sendMore("CMI");
         sender.send("{\"server\":\"Main\",\"from\":{\"uuid\":\"c413b466-06f0-4a53-b088-d6bc1eb1cd21\",\"name\":\"ratcraft\"},\"to\":{\"type\":\"all\",\"filter\":[]},\"timestamp\":1436978664,\"id\":30727,\"context\":\"2de58c43-c878-4c7c-ab6b-ddf7c32045b3\",\"finalizeContext\":true,\"type\":\"text\",\"importance\":0,\"contents\":\"Hello :3\"}");
         System.out.println("B");
     }
