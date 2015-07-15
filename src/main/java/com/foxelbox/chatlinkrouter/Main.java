@@ -27,13 +27,22 @@ public class Main {
 
     public static ZMQ.Context zmqContext;
 
+    private static void moveElements(final ZMQ.Socket from, final ZMQ.Socket to) {
+        boolean more;
+        do {
+            byte[] msg = from.recv(0);
+            more = from.hasReceiveMore();
+            to.send(msg, more ? ZMQ.SNDMORE : 0);
+        } while(more);
+    }
+
     public static void main(String[] args) throws IOException {
         configuration = new Configuration(new File("."));
         zmqContext = ZMQ.context(4);
 
         final ZMQ.Socket serverToMe = zmqContext.socket(ZMQ.SUB);
         serverToMe.bind(configuration.getValue("zmq-server-to-broker", "tcp://127.0.0.1:5556"));
-        serverToMe.subscribe(new byte[] { '{' });
+        serverToMe.subscribe("CMI".getBytes());
         final ZMQ.Socket meToLink = zmqContext.socket(ZMQ.PUSH);
         meToLink.bind(configuration.getValue("zmq-broker-to-link", "tcp://127.0.0.1:5557"));
 
@@ -52,34 +61,18 @@ public class Main {
             public void run() {
                 while(!Thread.currentThread().isInterrupted()) {
                     poller.poll();
-                    boolean more;
                     if(poller.pollin(0)) {
-                        do {
-                            byte[] msg = serverToMe.recv(0);
-                            more = meToLink.hasReceiveMore();
-                            meToLink.send(msg, more ? ZMQ.SNDMORE : 0);
-                        } while(more);
+                        serverToMe.recv();
+                        moveElements(serverToMe, meToLink);
                     }
                     if(poller.pollin(1)) {
-                        do {
-                            byte[] msg = meToLink.recv(0);
-                            more = meToLink.hasReceiveMore();
-                            serverToMe.send(msg, more ? ZMQ.SNDMORE : 0);
-                        } while(more);
+                        moveElements(meToLink, serverToMe);
                     }
                     if(poller.pollin(2)) {
-                        do {
-                            byte[] msg = linkToMe.recv(0);
-                            more = linkToMe.hasReceiveMore();
-                            meToServer.send(msg, more ? ZMQ.SNDMORE : 0);
-                        } while(more);
+                        moveElements(linkToMe, meToServer);
                     }
                     if(poller.pollin(3)) {
-                        do {
-                            byte[] msg = meToServer.recv(0);
-                            more = meToServer.hasReceiveMore();
-                            linkToMe.send(msg, more ? ZMQ.SNDMORE : 0);
-                        } while(more);
+                        moveElements(meToServer, linkToMe);
                     }
                 }
             }

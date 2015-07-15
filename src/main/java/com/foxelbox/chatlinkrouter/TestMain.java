@@ -37,19 +37,17 @@ public class TestMain {
 
         final ZMQ.Socket receiver = zmqContext.socket(ZMQ.SUB);
         receiver.connect(configuration.getValue("zmq-broker-to-server", "tcp://127.0.0.1:5559"));
-        receiver.subscribe(new byte[] { 'C', 'M', 'O' });
+        receiver.subscribe("CMO".getBytes());
 
         Thread t = new Thread() {
             @Override
             public void run() {
                 while(!Thread.currentThread().isInterrupted()) {
-                    receiver.recv(0);
-                    receiver.recvStr(CHARSET);
-                    System.out.println("SUB: " + System.nanoTime());
+                    System.out.println(receiver.recvStr(CHARSET));
                 }
             }
         };
-        t.setDaemon(true);
+        //t.setDaemon(true);
         t.setName("ZMQ SUB");
         t.start();
 
@@ -61,6 +59,7 @@ public class TestMain {
 
     public static void sendMessage() {
         System.out.println("A");
+        sender.sendMore("CMI");
         sender.send("{\"server\":\"Main\",\"from\":{\"uuid\":\"c413b466-06f0-4a53-b088-d6bc1eb1cd21\",\"name\":\"ratcraft\"},\"to\":{\"type\":\"all\",\"filter\":[]},\"timestamp\":1436978664,\"id\":30727,\"context\":\"2de58c43-c878-4c7c-ab6b-ddf7c32045b3\",\"finalizeContext\":true,\"type\":\"text\",\"importance\":0,\"contents\":\"Hello :3\"}");
         System.out.println("B");
     }
