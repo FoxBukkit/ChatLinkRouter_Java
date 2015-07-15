@@ -16,10 +16,8 @@
  */
 package com.foxelbox.chatlinkrouter;
 
-import com.foxelbox.dependencies.config.Configuration;
 import org.zeromq.ZMQ;
 
-import java.io.File;
 import java.nio.charset.Charset;
 
 public class TestMain {
@@ -27,16 +25,12 @@ public class TestMain {
     private static ZMQ.Socket sender;
     private static final Charset CHARSET = Charset.forName("UTF-8");
 
-    private static Configuration configuration;
-
     public static void main(String[] args) {
-        configuration = new Configuration(new File("."));
-
         sender = zmqContext.socket(ZMQ.PUSH);
-        sender.connect(configuration.getValue("zmq-server-to-broker", "tcp://127.0.0.1:5556"));
+        sender.connect("tcp://127.0.0.1:5556");
 
         final ZMQ.Socket receiver = zmqContext.socket(ZMQ.SUB);
-        receiver.connect(configuration.getValue("zmq-broker-to-server", "tcp://127.0.0.1:5559"));
+        receiver.connect("tcp://127.0.0.1:5559");
         receiver.subscribe("CMO".getBytes());
 
         Thread t = new Thread() {

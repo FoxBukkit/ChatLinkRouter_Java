@@ -41,14 +41,14 @@ public class Main {
         zmqContext = ZMQ.context(4);
 
         final ZMQ.Socket serverToMe = zmqContext.socket(ZMQ.PULL);
-        serverToMe.bind(configuration.getValue("zmq-server-to-broker", "tcp://127.0.0.1:5556"));
+        ZeroMQConfigurator.parseZeroMQConfig(configuration.getValue("zmq-server-to-broker", ZeroMQConfigurator.getDefaultConfig("bind", 5556)), serverToMe);
         final ZMQ.Socket meToLink = zmqContext.socket(ZMQ.PUSH);
-        meToLink.bind(configuration.getValue("zmq-broker-to-link", "tcp://127.0.0.1:5557"));
+        ZeroMQConfigurator.parseZeroMQConfig(configuration.getValue("zmq-broker-to-link", ZeroMQConfigurator.getDefaultConfig("connect", 5557)), meToLink);
 
         final ZMQ.Socket linkToMe = zmqContext.socket(ZMQ.XSUB);
-        linkToMe.bind(configuration.getValue("zmq-link-to-broker", "tcp://127.0.0.1:5558"));
+        ZeroMQConfigurator.parseZeroMQConfig(configuration.getValue("zmq-link-to-broker", ZeroMQConfigurator.getDefaultConfig("connect", 5558)), linkToMe);
         final ZMQ.Socket meToServer = zmqContext.socket(ZMQ.XPUB);
-        meToServer.bind(configuration.getValue("zmq-broker-to-server", "tcp://127.0.0.1:5559"));
+        ZeroMQConfigurator.parseZeroMQConfig(configuration.getValue("zmq-broker-to-server", ZeroMQConfigurator.getDefaultConfig("bind", 5559)), meToServer);
 
         final ZMQ.Poller poller = new ZMQ.Poller(4);
         poller.register(serverToMe, ZMQ.Poller.POLLIN);
