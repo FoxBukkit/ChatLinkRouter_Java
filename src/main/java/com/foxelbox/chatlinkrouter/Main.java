@@ -5,7 +5,6 @@ import org.zeromq.ZMQ;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 public class Main {
     public static Configuration configuration;
