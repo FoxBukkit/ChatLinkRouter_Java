@@ -50,26 +50,36 @@ public class Main {
         final ZMQ.Socket meToServer = zmqContext.socket(ZMQ.XPUB);
         ZeroMQConfigurator.parseZeroMQConfig(configuration.getValue("zmq-broker-to-server", ZeroMQConfigurator.getDefaultConfig("bind", 5559)), meToServer);
 
-        final ZMQ.Poller poller = new ZMQ.Poller(4);
-        poller.register(serverToMe, ZMQ.Poller.POLLIN);
-        poller.register(meToLink, ZMQ.Poller.POLLIN);
-        poller.register(linkToMe, ZMQ.Poller.POLLIN);
-        poller.register(meToServer, ZMQ.Poller.POLLIN);
+        final ZMQ.Poller poller1 = new ZMQ.Poller(2);
+        poller1.register(serverToMe, ZMQ.Poller.POLLIN);
+        poller1.register(meToLink, ZMQ.Poller.POLLIN);
+
+        final ZMQ.Poller poller2 = new ZMQ.Poller(2);
+        poller2.register(linkToMe, ZMQ.Poller.POLLIN);
+        poller2.register(meToServer, ZMQ.Poller.POLLIN);
 
         new Thread() {
             public void run() {
                 while(!Thread.currentThread().isInterrupted()) {
-                    poller.poll();
-                    if(poller.pollin(0)) {
+                    poller1.poll();
+                    if(poller1.pollin(0)) {
                         moveElements(serverToMe, meToLink);
                     }
-                    if(poller.pollin(1)) {
+                    if(poller1.pollin(1)) {
                         moveElements(meToLink, serverToMe);
                     }
-                    if(poller.pollin(2)) {
+                }
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                while(!Thread.currentThread().isInterrupted()) {
+                    poller2.poll();
+                    if (poller2.pollin(0)) {
                         moveElements(linkToMe, meToServer);
                     }
-                    if(poller.pollin(3)) {
+                    if (poller2.pollin(1)) {
                         moveElements(meToServer, linkToMe);
                     }
                 }
