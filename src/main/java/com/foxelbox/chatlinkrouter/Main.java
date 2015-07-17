@@ -27,15 +27,6 @@ public class Main {
 
     public static ZMQ.Context zmqContext;
 
-    private static void moveElements(final ZMQ.Socket from, final ZMQ.Socket to) {
-        boolean more;
-        do {
-            byte[] msg = from.recv(0);
-            more = from.hasReceiveMore();
-            to.send(msg, more ? ZMQ.SNDMORE : 0);
-        } while(more);
-    }
-
     public static void main(String[] args) throws IOException {
         configuration = new Configuration(new File("."));
         zmqContext = ZMQ.context(4);
@@ -50,39 +41,15 @@ public class Main {
         final ZMQ.Socket meToServer = zmqContext.socket(ZMQ.XPUB);
         ZeroMQConfigurator.parseZeroMQConfig(configuration.getValue("zmq-broker-to-server", ZeroMQConfigurator.getDefaultConfig("bind", 5559)), meToServer);
 
-        final ZMQ.Poller poller1 = new ZMQ.Poller(2);
-        poller1.register(serverToMe, ZMQ.Poller.POLLIN);
-        poller1.register(meToLink, ZMQ.Poller.POLLIN);
-
-        final ZMQ.Poller poller2 = new ZMQ.Poller(2);
-        poller2.register(linkToMe, ZMQ.Poller.POLLIN);
-        poller2.register(meToServer, ZMQ.Poller.POLLIN);
-
         new Thread() {
             public void run() {
-                while(!Thread.currentThread().isInterrupted()) {
-                    poller1.poll();
-                    if(poller1.pollin(0)) {
-                        moveElements(serverToMe, meToLink);
-                    }
-                    if(poller1.pollin(1)) {
-                        moveElements(meToLink, serverToMe);
-                    }
-                }
+                ZMQ.proxy(serverToMe, meToLink, null);
             }
         }.start();
 
         new Thread() {
             public void run() {
-                while(!Thread.currentThread().isInterrupted()) {
-                    poller2.poll();
-                    if (poller2.pollin(0)) {
-                        moveElements(linkToMe, meToServer);
-                    }
-                    if (poller2.pollin(1)) {
-                        moveElements(meToServer, linkToMe);
-                    }
-                }
+                ZMQ.proxy(linkToMe, meToServer, null);
             }
         }.start();
     }
